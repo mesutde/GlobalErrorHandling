@@ -1,9 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
+using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using System.ComponentModel.DataAnnotations;
 
 namespace GlobalErrorHandling.Middleware;
-
 public class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;
@@ -32,8 +33,35 @@ public class ExceptionMiddleware
             if (error.InnerException != null)
                 Console.WriteLine("Inner Error: " + error.InnerException.Message);
 
-            //Return StatusCode, Message, Details as result
-            await response.WriteAsync("Error");
+
+			var st = new StackTrace(error, true);
+			// Get the top stack frame
+			var frame = st.GetFrame(0);
+			// Get the line number from the stack frame
+			var ErrorLine = frame.GetFileLineNumber();
+
+			var controllerActionDescriptor = context
+				   .GetEndpoint()
+				   .Metadata
+				   .GetMetadata<ControllerActionDescriptor>();
+			var controllerName = controllerActionDescriptor.ControllerName;
+			var actionName = controllerActionDescriptor.ActionName;
+			var message = error.Message;
+
+
+
+
+
+
+			string logMessage = "Error Message Name : " + message + "\n" +
+								"Controller Name : " + controllerName + "\n" +
+								"Action Name : " + actionName + "\n" +
+								"Error Line Number : " + ErrorLine;
+
+
+
+			//Return StatusCode, Message, Details as result
+			await response.WriteAsync("Error");
         }
     }
 }
